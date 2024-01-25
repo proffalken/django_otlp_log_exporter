@@ -1,5 +1,5 @@
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
+from opentelemetry.exporter.otlp.proto.http._log_exporter import (
     OTLPLogExporter,
 )
 from opentelemetry._logs import set_logger_provider
