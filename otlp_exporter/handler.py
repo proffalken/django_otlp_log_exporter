@@ -1,7 +1,19 @@
+import os
+
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.http._log_exporter import (
+
+# Check which protocol we should be using for our logs
+protocol = os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "GRPC")
+if protocol == "HTTP":
+    # Import the HTTP OTLP Protocol
+    from opentelemetry.exporter.otlp.proto.http._log_exporter import (
     OTLPLogExporter,
-)
+    )
+else:
+    # Fall back to GRPC by default
+    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
+    OTLPLogExporter,
+    )
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.sdk._logs import (
     LoggerProvider,
@@ -37,10 +49,15 @@ class DirectWriteLoggingHandler(LoggingHandler):
         )
         set_logger_provider(log_provider)
 
-        exporter = OTLPLogExporter(
-            endpoint=configs["endpoint"],
-            insecure=not configs["is_secure"],
-        )
+        if os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "GRPC") == "HTTP":
+            exporter = OTLPLogExporter(
+                endpoint=configs["endpoint"],
+            )
+        else:
+            exporter = OTLPLogExporter(
+                endpoint=configs["endpoint"],
+                insecure=not configs["is_secure"],
+            )
         log_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
 
         super(__class__, self).__init__(logger_provider=log_provider)
@@ -48,7 +65,7 @@ class DirectWriteLoggingHandler(LoggingHandler):
     def _load_settings(self):
         """load configuration from settings.py and return a dict"""
         config = {
-            "endpoint": self._load_settings_option("OTLP_ENDPOINT", "http://localhost:4317"),
+            "endpoint": self._load_settings_option("OTLP_LOGGING_ENDPOINT", "http://localhost:4317"),
             "is_secure": self._load_settings_option("OTLP_IS_SECURE", True),
             "tag": self._load_settings_option("OTLP_TAG", "localhost debug"),
         }
