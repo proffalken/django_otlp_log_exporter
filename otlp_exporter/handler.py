@@ -3,8 +3,7 @@ import os
 from opentelemetry import trace
 
 # Check which protocol we should be using for our logs
-protocol = os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "GRPC")
-if protocol == "HTTP":
+if os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "GRPC") == "HTTP":
     # Import the HTTP OTLP Protocol
     from opentelemetry.exporter.otlp.proto.http._log_exporter import (
     OTLPLogExporter,
